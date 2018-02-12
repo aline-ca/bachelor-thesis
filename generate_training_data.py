@@ -30,8 +30,9 @@ Note that the other scripts are outdated and should not be used anymore.
 import pronouncing
 import re
 import json
-import Limerick
-from vowels import *
+from RhymeEvaluation import Limerick
+from RhymeEvaluation import vowels
+
 
 """
 Formatting of the generated file can be read in again very easily with json.load(file)):
