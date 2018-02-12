@@ -102,7 +102,7 @@ class Limerick(object):
             pron = pron[0]
         syllable_count = 0
         for phoneme in pron.split():
-            if phoneme in vowels:
+            if phoneme in vowels.vowels:
                 syllable_count += 1
         return syllable_count
 
@@ -215,7 +215,7 @@ class Limerick(object):
                 # has more than one syllable:
             else:
                 for phoneme in pron.split():
-                    if phoneme in vowels:
+                    if phoneme in vowels.vowels:
                         stress_repr += "0"
                 return stress_repr
 

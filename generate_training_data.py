@@ -33,7 +33,6 @@ import json
 from RhymeEvaluation import Limerick
 from RhymeEvaluation import vowels
 
-
 """
 Formatting of the generated file can be read in again very easily with json.load(file)):
 Example for formatting of the first poem:
@@ -182,7 +181,7 @@ def count_syllables(pron):
         pron = pron[0]
     syllable_count = 0
     for phoneme in pron.split():
-        if phoneme in vowels:
+        if phoneme in vowels.vowels:
             syllable_count += 1
     return syllable_count
 
