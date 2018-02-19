@@ -23,7 +23,7 @@
 This script combines the functionality of the three following separate scripts:
         get_cmu_data.py
         remove_poems_without_metre.py
-    convert_unknown_word_representations.py
+        convert_unknown_word_representations.py
 Note that the other scripts are outdated and should not be used anymore.
 """
 
@@ -89,13 +89,20 @@ def parse_line(line):
     line = re.sub(r"(?!<=\s)\?(?!=\s)", " ", line, flags=re.U)
 
     # Remove brackets, punctuation etc at the beginning/end of the word:
-    return [word.strip("?!'\"´,.;:)([]-") for word in line.split()]
+    stripped_line = [word.strip("?!'\"´,.;:)([]-") for word in line.split()]
+
+    # Remove all empty strings from list (they get created for single dots in the data, e.g. in a line like this:
+    # you're home, without question . . .)
+    while '' in stripped_line:
+        stripped_line.remove('')
+
+    return stripped_line
 
 
 # Looks up a complete word in the pronouncing dictionary.
-def get_complete_pronounciation(word):
+def get_complete_pronunciation(word):
     pronouncing_list = pronouncing.phones_for_word(word)
-    if pronouncing_list != []:
+    if pronouncing_list:
         return pronouncing_list
     else:
         return []
@@ -106,15 +113,15 @@ def build_unknown_word_dict():
     with open("unknown_words/unknown_words_complete_dict.txt", 'r') as file:
         for line in file:
             word = line.split(' ', 1)[0]
-            # Sometimes there is just one space seperating the word from its pronounciation,
+            # Sometimes there is just one space seperating the word from its pronunciation,
             # and sometimes it's two spaces.
-            pronounciation = line.split(' ', 1)[1]
-            if pronounciation[0] == ' ':
-                pronounciation = pronounciation[1:]
+            pronunciation = line.split(' ', 1)[1]
+            if pronunciation[0] == ' ':
+                pronunciation = pronunciation[1:]
 
             # Remove newline sign at the end:
-            pronounciation = pronounciation[:-1]
-            unknown_word_dict[word] = pronounciation
+                pronunciation = pronunciation[:-1]
+            unknown_word_dict[word] = pronunciation
 
     return unknown_word_dict
 
@@ -137,7 +144,7 @@ def get_unknown_word_repr(word):
         pronouncing_list = unknown_word_dict[uppercase_word]
 
     else:
-        print("word " + word + " still has no pronounciation!")
+        print("word " + word + " still has no pronunciation!")
 
     return [pronouncing_list]
 
@@ -151,7 +158,7 @@ def get_phonemes_for_line(words):
     for word in words:
 
         # CASE 1: Look up whether pronunciation(s) for the complete word exist(s).
-        pronouncing_list = get_complete_pronounciation(word)
+        pronouncing_list = get_complete_pronunciation(word)
         # Found pronouncing.
         if pronouncing_list != []:
 
@@ -221,6 +228,7 @@ with open(input_file, 'r') as infile:                       # Open limericks fil
         # if line in ['\n', '\r\n']: continue
 
         words = parse_line(line)                                # List of words in the line (without punctuation)
+
         line_as_str = get_str_repr(words)                       # String representation of line
         phonemes_for_line = get_phonemes_for_line(words)        # Phoneme representation of line
 
