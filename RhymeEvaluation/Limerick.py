@@ -14,7 +14,7 @@
 
 import sys
 from RhymeEvaluation import vowels
-
+from RhymeEvaluation import rhyme_evaluation
 
 # Limerick class
 class Limerick(object):
@@ -329,18 +329,14 @@ class Limerick(object):
         return new_representation
 
 
-    # Iterate over
-    # Muss auserhalb der Klasse aufgerufen werden.
-    def rewrite_unknown_word_repr_in_data(self):
-        pass
+    # Computes the rhyming score for a poem.
+    def get_score(self):
+        score_1 = rhyme_evaluation.rhymes(self.verse_1, self.verse_2)
+        score_2 = rhyme_evaluation.rhymes(self.verse_3, self.verse_4)
+        score_3 = rhyme_evaluation.rhymes(self.verse_1, self.verse_5)
+        score_4 = rhyme_evaluation.rhymes(self.verse_2, self.verse_5)
 
+        rhyme_scheme_score = ( score_1 + score_2 + score_3 + score_4 ) / 4
 
+        return rhyme_scheme_score
 
-
-
-
-
-"""
-erstmal nochmal über alles iterieren? Wo wird nach unknown_words abgefragt?
-Jetzt nur noch die Repräsentation in den Daten umschreiben! Am Schluss habe ich dann alles in final_generated_data.
-"""
