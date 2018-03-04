@@ -69,6 +69,8 @@ def has_same_rhyming_part(repr_1, repr_2):
 
 # Collect pre-defined score for phonetic edit distance calculation. Scores can later be adjusted/tuned if necessary.
 def get_score_for_ed(ed):
+    if ed == 0:
+        return 0
     if ed == 1:
         return 0.95
     if ed == 2:
@@ -89,7 +91,6 @@ def get_score_for_ed(ed):
         return 0.1
     if ed > 9:
         return 0
-
 
 """
 Checks whether two verses rhyme.

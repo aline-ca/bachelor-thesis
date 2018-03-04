@@ -158,10 +158,7 @@ print('score 0.1: {}%'.format(round(count0_1/num_of_rhymes, 5)))
 print('score 0.0: {}%'.format(round(count0_0/num_of_rhymes, 5)))
 
 # If counts do not add up, something is wrong.
-#assert(num_of_rhymes == (count1_0 + count0_95 + count0_8 + count0_7 + count0_6 + count0_5 + count0_4 + count0_3 + count0_2 + count0_1 + count0_0))
+assert(num_of_rhymes == (count1_0 + count0_95 + count0_8 + count0_7 + count0_6 + count0_5 + count0_4 + count0_3 + count0_2 + count0_1 + count0_0))
 
-print(num_of_rhymes)
-print(count1_0 + count0_95 + count0_8 + count0_7 + count0_6 + count0_5 + count0_4 + count0_3 + count0_2 + count0_1 + count0_0)
-# Ok, something is wrong. Why?
 
 print("Done!")
