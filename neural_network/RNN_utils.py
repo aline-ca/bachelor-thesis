@@ -34,7 +34,7 @@ def generate_text(model, length, vocab_size, ix_to_char):
 
         # ValueError: Error when checking : expected lstm_1_input to have shape (50, 71) but got array with shape (1, 71)
 
-        ix = np.argmax(model.predict(X[:, :i + 1, :], verbose=1)[0], 1)
+        ix = np.argmax(model.predict(X[:, :i + 1, :], verbose=0)[0], 1)
         y_char.append(ix_to_char[ix[-1]]) # Append corresponding char for index
     # Combine generated sequence to string. If an end-of-limerick char was generated, return sequence up to this char,
     # else return the complete sequence.

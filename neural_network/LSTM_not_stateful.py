@@ -96,7 +96,7 @@ else:
 if args['mode'] == 'train' or WEIGHTS == '':
   while True:
     print('\n\nEpoch: {}\n'.format(epochs))
-    model.fit(X, y, batch_size=BATCH_SIZE, epochs=EPOCHS)
+    model.fit(X, y, batch_size=BATCH_SIZE, epochs=1)
     epochs += 1
     generate_text(model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char)
     if epochs % 10 == 0:
