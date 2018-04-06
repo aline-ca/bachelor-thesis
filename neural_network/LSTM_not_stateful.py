@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #####################################################################
-# File:                           LSTM_stateful.py                  #
+# File:                           LSTM_not_stateful.py              #
 # Author:                         Aline Castendiek                  #
 # Student ID:                     768297                            #
 # Date:                           30/03/18                          #
@@ -13,6 +13,7 @@
 #                                                                   #
 #####################################################################
 
+from __future__ import print_function
 #import matplotlib.pyplot as plt
 import matplotlib as mpl
 mpl.use('TkAgg')
@@ -31,7 +32,6 @@ import os
 # Disable warning "Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA"
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-
 """ 
     BATCH_SIZE:         number of training examples in one forward/backward pass
     LAYER_NUM:          number of hidden layers
@@ -49,7 +49,7 @@ ap.add_argument('-layer_num', type=int, default=2)
 ap.add_argument('-seq_length', type=int, default=50)
 ap.add_argument('-hidden_dim', type=int, default=500)
 ap.add_argument('-generate_length', type=int, default=200)
-ap.add_argument('-epochs', type=int, default=20)
+ap.add_argument('-epochs', type=int, default=100)
 ap.add_argument('-mode', default='train')
 ap.add_argument('-weights', default='')
 
@@ -68,73 +68,48 @@ WEIGHTS = args['weights']
 # Creating training data
 X, y, VOCAB_SIZE, ix_to_char = load_data(DATA_DIR, SEQ_LENGTH)
 
-# Creating and compiling the Networks
-train_model = Sequential()
-predict_model = Sequential()
-
-train_model.add(LSTM(HIDDEN_DIM, return_sequences=True, stateful=True,
-               input_shape=(None, VOCAB_SIZE), batch_input_shape=(BATCH_SIZE, SEQ_LENGTH, VOCAB_SIZE)))
-
-predict_model.add(LSTM(HIDDEN_DIM, return_sequences=True, stateful=True,
-               input_shape=(None, VOCAB_SIZE), batch_input_shape=(BATCH_SIZE, 1, VOCAB_SIZE)))
+# Creating and compiling the Network
+model = Sequential()
+model.add(LSTM(HIDDEN_DIM, return_sequences=True, input_shape=(None, VOCAB_SIZE)))
+# model.add(SimpleRNN(HIDDEN_DIM, return_sequences=True, stateful=True, batch_input_shape=(BATCH_SIZE, SEQ_LENGTH, VOCAB_SIZE)))
 
 for i in range(LAYER_NUM - 1):
-  train_model.add(LSTM(HIDDEN_DIM, return_sequences=True, stateful=True))
-  predict_model.add(LSTM(HIDDEN_DIM, return_sequences=True, stateful=True))
+  model.add(LSTM(HIDDEN_DIM, return_sequences=True))
 
-train_model.add(TimeDistributed(Dense(VOCAB_SIZE)))
-train_model.add(Activation('softmax'))
-train_model.compile(loss="categorical_crossentropy", optimizer="rmsprop")
-
-predict_model.add(TimeDistributed(Dense(VOCAB_SIZE)))
-predict_model.add(Activation('softmax'))
-predict_model.compile(loss="categorical_crossentropy", optimizer="rmsprop")
-
-# model = Sequential()
-
-# model.add(LSTM(HIDDEN_DIM, return_sequences=True, stateful=True,
-#                input_shape=(None, VOCAB_SIZE), batch_input_shape=(BATCH_SIZE, SEQ_LENGTH, VOCAB_SIZE)))
-#
-# for i in range(LAYER_NUM - 1):
-#   model.add(LSTM(HIDDEN_DIM, return_sequences=True, stateful=True))
-
-# model.add(TimeDistributed(Dense(VOCAB_SIZE)))
-# model.add(Activation('softmax'))
-# model.compile(loss="categorical_crossentropy", optimizer="rmsprop")
-
-#model.summary()
+model.add(TimeDistributed(Dense(VOCAB_SIZE)))
+model.add(Activation('softmax'))
+model.compile(loss="categorical_crossentropy", optimizer="rmsprop")
 
 # Generate some sample before training to know how bad it is!
-generate_text(predict_model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char)
+generate_text(model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char)
+
+#from keras.utils import plot_model
+#plot_model(model, to_file='model.png', show_shapes=True)
 
 if not WEIGHTS == '':
-  train_model.load_weights(WEIGHTS)
+  model.load_weights(WEIGHTS)
   epochs = int(WEIGHTS[WEIGHTS.rfind('_') + 1:WEIGHTS.find('.')])
 else:
     epochs = 0
-
 
 # Training if there is no trained weights specified
 if args['mode'] == 'train' or WEIGHTS == '':
   while True:
     print('\n\nEpoch: {}\n'.format(epochs))
-    train_model.fit(X, y, batch_size=BATCH_SIZE, verbose=1, epochs=EPOCHS)
+    model.fit(X, y, batch_size=BATCH_SIZE, epochs=EPOCHS)
     epochs += 1
-    train_model.save_weights('lstm_model.h5')
-    predict_model.load_weights('lstm_model.h5')
-
-    generate_text(predict_model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char)
+    generate_text(model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char)
     if epochs % 10 == 0:
-      train_model.save_weights('checkpoint_layer_{}_hidden_{}_epoch_{}.hdf5'.format(LAYER_NUM, HIDDEN_DIM, epochs))
+      model.save_weights('checkpoint_layer_{}_hidden_{}_epoch_{}.hdf5'.format(LAYER_NUM, HIDDEN_DIM, epochs))
 
 # Else, loading the trained weights and performing generation only
-# elif WEIGHTS == '':
-#   # Loading the trained weights
-#   model.load_weights(WEIGHTS)
-#   generate_text(model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char)
-#   print('\n\n')
-# else:
-#   print('\n\nNothing to do!')
+elif WEIGHTS == '':
+  # Loading the trained weights
+  model.load_weights(WEIGHTS)
+  generate_text(model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char)
+  print('\n\n')
+else:
+  print('\n\nNothing to do!')
 
 
 """

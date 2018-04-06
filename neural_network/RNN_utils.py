@@ -13,7 +13,6 @@
 #                                                                   #
 #####################################################################
 
-from __future__ import print_function
 import numpy as np
 
 """
@@ -25,11 +24,16 @@ def generate_text(model, length, vocab_size, ix_to_char):
 
     ix = [np.random.randint(vocab_size)]    # Start with random character (as int)
     y_char = [ix_to_char[ix[-1]]]           # Get char from int
-    X = np.zeros((1, length, vocab_size))
+    X = np.zeros((1, length, vocab_size))   # Create input data X, shape = (1,200,71)
+
+    # Iterate over generated length (step by step, to predict single chars):
     for i in range(length):
         # Appending the last predicted character to sequence
         X[0, i, :][ix[-1]] = 1      # Init
         # print(ix_to_char[ix[-1]], end="")
+
+        # ValueError: Error when checking : expected lstm_1_input to have shape (50, 71) but got array with shape (1, 71)
+
         ix = np.argmax(model.predict(X[:, :i + 1, :], verbose=1)[0], 1)
         y_char.append(ix_to_char[ix[-1]]) # Append corresponding char for index
     # Combine generated sequence to string. If an end-of-limerick char was generated, return sequence up to this char,
