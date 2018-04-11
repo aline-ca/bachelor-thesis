@@ -38,7 +38,7 @@ def generate_text(model, length, vocab_size, ix_to_char):
         y_char.append(ix_to_char[ix[-1]]) # Append corresponding char for index
     # Combine generated sequence to string. If an end-of-limerick char was generated, return sequence up to this char,
     # else return the complete sequence.
-    print(''.join(y_char).split('€')[0])
+    return''.join(y_char).split('€')[0]
 
 
 # method for preparing the training data
