@@ -142,8 +142,13 @@ while current_epoch <= EPOCHS:
   print('\n\n' + generated_text)
   logfile.write(generated_text + '\n\n')
 
-  loss = round(hist.history['loss'], 8)
+  #print(hist.history)
+  #print(type(hist.history))
+  loss = round(hist.history['loss'][0], 8)
   logfile.write("Loss: \n".format(loss))
+
+      #round(hist.history[0], 8)
+  #logfile.write("Loss: \n".format(loss))
 
   # Save weights in specified subdirectory
   model.save_weights(weight_dir + '/weights_epoch_{}.hdf5'.format(current_epoch))
