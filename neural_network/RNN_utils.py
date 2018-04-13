@@ -14,6 +14,7 @@
 #####################################################################
 
 import numpy as np
+import re
 
 """
 Generates text character-wise based on a trained model.
@@ -41,9 +42,56 @@ def generate_text(model, length, vocab_size, ix_to_char):
     return''.join(y_char).split('€')[0]
 
 
-# method for preparing the training data
+# Method for loading the training data while removing punctuation and digits.
 def load_data(data_dir, seq_length):
+
+    data = []
+
+    # Collect and prepare the data as chars:
+    with open(data_dir, 'r') as infile:
+        for line in infile:
+            # Remove all punctuation except: [- ' € § \n|
+            line_char_array_1 = re.sub(r"[^\w'\s€§-]+", '', line)
+            # Remove digits and underscore:
+            line_char_array_2 = list(re.sub(r"[\d_]+", '', line_char_array_1))
+            data.extend(line_char_array_2)
+    infile.close()
+
+    chars = list(set(data))
+    VOCAB_SIZE = len(chars)
+
+    #print(sorted(chars))
+
+    print('Data length: {} characters'.format(len(data)))
+    print('Vocabulary size: {} characters'.format(VOCAB_SIZE))
+
+    ix_to_char = {ix: char for ix, char in enumerate(chars)}
+    char_to_ix = {char: ix for ix, char in enumerate(chars)}
+
+    X = np.zeros((int(len(data) / seq_length), seq_length, VOCAB_SIZE))
+    y = np.zeros((int(len(data) / seq_length), seq_length, VOCAB_SIZE))
+    for i in range(0, int(len(data) / seq_length)):
+        X_sequence = data[i * seq_length:(i + 1) * seq_length]
+        X_sequence_ix = [char_to_ix[value] for value in X_sequence]
+        input_sequence = np.zeros((seq_length, VOCAB_SIZE))
+        for j in range(seq_length):
+            input_sequence[j][X_sequence_ix[j]] = 1.
+            X[i] = input_sequence
+
+        y_sequence = data[i * seq_length + 1:(i + 1) * seq_length + 1]
+        y_sequence_ix = [char_to_ix[value] for value in y_sequence]
+        target_sequence = np.zeros((seq_length, VOCAB_SIZE))
+        for j in range(seq_length):
+            target_sequence[j][y_sequence_ix[j]] = 1.
+            y[i] = target_sequence
+    return X, y, VOCAB_SIZE, ix_to_char
+
+
+
+# Old method for loading the training data including punctuation and numbers.
+def load_data_with_punct(data_dir, seq_length):
     data = open(data_dir, 'r').read()
+
     chars = list(set(data))
     VOCAB_SIZE = len(chars)
 
