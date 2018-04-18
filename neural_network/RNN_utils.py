@@ -46,9 +46,13 @@ def generate_text(model, length, vocab_size, ix_to_char, char_to_ix):
         # Note to self: X[i:j:k] means i = starting index, j = stopping index and k = step size
         X[0, i, :][ix_array[-1]] = 1            # Initialize
 
+        # in stateful model, it needs a (seq_length)
         # ValueError: Error when checking : expected lstm_1_input to have shape (50, 71) but got array with shape (1, 71)
 
         # Predict sequence up to i + 1
+        #print(X.shape)
+        #geht anscheinend nicht um X.shape, das ist (51, 200, 33) wenn man es ändert
+
         ix_array = np.argmax(model.predict(X[:, :i + 1, :], verbose=0)[0], 1)
 
         generated_text.append(ix_to_char[ix_array[-1]])  # Append corresponding char for index

@@ -85,7 +85,7 @@ logfile.write('TRAINING SEQUENCE LENGTH: {}\n\n'.format(SEQ_LENGTH))
 
 logfile.write('OTHER KERAS TRAINING PARAMETERS:\n')
 logfile.write('stateful = False\n')
-logfile.write('shuffle = True\n\n')
+logfile.write('shuffle = False\n\n')
 
 # Create directory where weights should be saved:
 weight_dir = ID + '_WEIGHTS'
@@ -102,7 +102,6 @@ logfile.write('Vocabulary size (Total number of different chars): {}\n\n\n'.form
 # Creating and compiling the Network
 model = Sequential()
 model.add(LSTM(HIDDEN_DIM, return_sequences=True, input_shape=(None, VOCAB_SIZE)))
-# model.add(SimpleRNN(HIDDEN_DIM, return_sequences=True, stateful=True, batch_input_shape=(BATCH_SIZE, SEQ_LENGTH, VOCAB_SIZE)))
 
 for i in range(LAYER_NUM - 1):
   model.add(LSTM(HIDDEN_DIM, return_sequences=True))
@@ -131,36 +130,20 @@ while current_epoch <= EPOCHS:
   logfile.write('\n\nEpoch: {}\n'.format(current_epoch))
 
   # Train model for one epoch, then generate some text, then continue training, and so on.
-  hist = model.fit(X, y, batch_size=BATCH_SIZE, epochs=1, callbacks=[history])
+  hist = model.fit(X, y, batch_size=BATCH_SIZE, epochs=1, shuffle=False, callbacks=[history])
   # (Note: Need to define callbacks if we want to extract the loss to write it into logfile.)
 
   generated_text = generate_text(model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char, char_to_ix)
   print('\n\n' + generated_text)
-
-  # Generate two texts right now, just to see if they differ
-  generated_text_2 = generate_text(model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char, char_to_ix)
-  print('\n\n' + generated_text_2)
-
   logfile.write(generated_text + '\n\n')
 
-  #print(hist.history)
-  #print(type(hist.history))
   loss = round(hist.history['loss'][0], 6)
-
-  loss_str = str(loss)
-  print(loss_str)
-  print(type(loss_str))
-
-  logfile.write("Loss: \n".format(str(loss)))
-
-      #round(hist.history[0], 8)
-  #logfile.write("Loss: \n".format(loss))
+  logfile.write("Loss: {} \n".format(str(loss)))
 
   # Save weights in specified subdirectory
   model.save_weights(weight_dir + '/weights_epoch_{}.hdf5'.format(current_epoch))
 
   current_epoch += 1
-
 
 logfile.close()
 
