@@ -14,20 +14,19 @@
 #####################################################################
 
 from __future__ import print_function
+import os
+import argparse
 #import matplotlib.pyplot as plt
 import matplotlib as mpl
 mpl.use('TkAgg')
 import numpy as np
 from keras.models import Sequential
-from keras.layers.core import Dense, Activation, Dropout
+from keras.layers.core import Dense, Activation
 from keras.layers.recurrent import LSTM
 from keras.layers.wrappers import TimeDistributed
 from keras.callbacks import History
-
-import argparse
-from RNN_utils import *
 from keras import backend as K
-import os
+from RNN_utils import *
 from datetime import datetime
 
 # Disable warning "Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA"
@@ -78,7 +77,7 @@ logfile.write('FILE NAME: {}\n'.format(this_filename))
 logfile.write('MODEL ID STRING: {}\n'.format(ID))
 logfile.write('MODEL STARTED AT: {}\n\n'.format(time))
 
-logfile.write('MODEL PARAMETERS:\n')
+logfile.write('MODEL PARAMETERS\n')
 logfile.write('BATCH SIZE: {}\n'.format(BATCH_SIZE))
 logfile.write('HIDDEN LAYERS: {}\n'.format(LAYER_NUM))
 logfile.write('NEURONS PER LAYER: {}\n'.format(HIDDEN_DIM))
@@ -96,12 +95,9 @@ if not os.path.exists(weight_dir):
 #####################################################################
 
 # Creating training data
-X, y, VOCAB_SIZE, ix_to_char = load_data(TRAIN_DATA_DIR, SEQ_LENGTH)
+X, y, VOCAB_SIZE, ix_to_char, char_to_ix = load_data(TRAIN_DATA_DIR, SEQ_LENGTH)
 
-logfile.write('Vocabulary size (Total number of different chars): {}\n'.format(VOCAB_SIZE))
-logfile.write('Length of complete data in chars: {}\n'.format( (len(X) + len(y))  ))
-logfile.write('Length of training data (X) in chars: {}\n'.format(len(X)))
-logfile.write('Length of target data (y) in chars: {}\n\n\n'.format(len(y)))
+logfile.write('Vocabulary size (Total number of different chars): {}\n\n\n'.format(VOCAB_SIZE))
 
 # Creating and compiling the Network
 model = Sequential()
@@ -116,9 +112,9 @@ model.add(Activation('softmax'))
 model.compile(loss="categorical_crossentropy", optimizer="rmsprop")
 
 # Generate some sample text before starting the training:
-sample_text = generate_text(model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char)
-
+sample_text = generate_text(model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char, char_to_ix)
 print(sample_text)
+
 logfile.write('Epoch: 0 (random generation before training)\n')
 logfile.write(sample_text + '\n')
 
@@ -138,14 +134,24 @@ while current_epoch <= EPOCHS:
   hist = model.fit(X, y, batch_size=BATCH_SIZE, epochs=1, callbacks=[history])
   # (Note: Need to define callbacks if we want to extract the loss to write it into logfile.)
 
-  generated_text = generate_text(model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char)
+  generated_text = generate_text(model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char, char_to_ix)
   print('\n\n' + generated_text)
+
+  # Generate two texts right now, just to see if they differ
+  generated_text_2 = generate_text(model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char, char_to_ix)
+  print('\n\n' + generated_text_2)
+
   logfile.write(generated_text + '\n\n')
 
   #print(hist.history)
   #print(type(hist.history))
-  loss = round(hist.history['loss'][0], 8)
-  logfile.write("Loss: \n".format(loss))
+  loss = round(hist.history['loss'][0], 6)
+
+  loss_str = str(loss)
+  print(loss_str)
+  print(type(loss_str))
+
+  logfile.write("Loss: \n".format(str(loss)))
 
       #round(hist.history[0], 8)
   #logfile.write("Loss: \n".format(loss))
