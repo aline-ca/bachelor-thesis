@@ -142,3 +142,13 @@ def load_data_with_punct(data_dir, seq_length):
             target_sequence[j][y_sequence_ix[j]] = 1.
             y[i] = target_sequence
     return X, y, VOCAB_SIZE, ix_to_char, char_to_ix
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+For a stateful model, the data must be cut at a length so that the number 
+of training examples is divisible by the batch size.
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+def get_new_data_length(number_of_samples, batch_size):
+    return number_of_samples - (number_of_samples % batch_size)
+
+
