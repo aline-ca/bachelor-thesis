@@ -15,10 +15,115 @@
 
 import numpy as np
 import re
+import random
+from keras.preprocessing.sequence import pad_sequences
+
+# Function for sampling the model predictions to a specified temperature.
+def sample(preds, temperature=1.0):
+    # Reshape to 1D array
+    preds = preds[0, :]
+
+    preds = np.asarray(preds).astype('float64')
+    preds = np.log(preds) / temperature
+    exp_preds = np.exp(preds)
+    preds = exp_preds / np.sum(exp_preds)
+    probas = np.random.multinomial(1, preds, 1)
+    return np.argmax(probas)
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Generates text character-wise based on a trained model. 
+Uses sampling for specified temperature now.
+Preset length is 200 chars -
+if an end-of-limerick char occurs in the text, only the string up to this char will be used.
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+def generate_text(model, length, vocab_size, ix_to_char, char_to_ix, temperature):
+
+    generated_text = ['§']                              # Start generation with start-of-limerick sign
+
+    # entspricht seed-text
+    start_index = random.randint(0, len(text) - maxlen - 1)
+    generated_text = text[start_index: start_index + maxlen]     #length of complete data?
+
+    #complete_text = generated_text
+
+    # hier kommt stattdessen auch length hin:
+    for i in range(400):
+        sampled = np.zeros((1, length, vocab_size))
+
+        for t, char in enumerate(generated_text):
+            sampled[0, t, char_to_ix[char]] = 1.
+
+        preds = model.predict(sampled, verbose=0)[0]
+        next_index = sample(preds, temperature)
+        next_char = ix_to_char[next_index]
+
+        generated_text += next_char
+        complete_text += generated_text
+
+        generated_text = generated_text[1:]
+
+
+
+    # Combine generated sequence to string. If an end-of-limerick char was generated, return sequence up to this char,
+    # else return the complete sequence. Also remove the start-of-limerick char in the beginning.
+    return ''.join(complete_text).split('€')[0][1:]
+
+#
+# """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+# Generates text character-wise based on a trained model. The preset for generated length is 200 chars -
+# if an end-of-limerick char occurs in the text, only the string up to this char will be used.
+# """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+# def generate_text(model, length, vocab_size, ix_to_char, char_to_ix, temperature):
+#
+#     generated_text = ['§']                              # Start generation with start-of-limerick sign
+#     ix_array = [char_to_ix[generated_text[-1]]]         # First entry of index array
+#
+#     X = np.zeros((1, length, vocab_size))           # Create input data X
+#
+#     X[0, 0, :][ix_array[-1]] = 1                    # Initialize value for start sign '§' (at position 0)
+#
+#     # Now predict rest of sequence char by char, based on these two chars (start at 1):
+#     for i in range(length):
+#
+#         # Note to self: X[i:j:k] means i = starting index, j = stopping index and k = step size
+#         X[0, i, :][ix_array[-1]] = 1            # Initialize
+#
+#         # Predict sequence up to i + 1
+#         #ix_array = np.argmax(model.predict(X[:, :i + 1, :], verbose=0)[0], 1)
+#         #print(type(ix_array))
+#
+#
+#         #preds = model.predict(X[:, :i + 1, :], verbose=0)[0]
+#
+#
+#         print(type(preds))
+#         print(preds.shape)
+#
+#
+#         sampled = sample(preds, temperature=temperature)
+#
+#         print(type(sampled))
+#         print(sampled.shape)
+#         # Reshape back to 2D array
+#         ix_array = sampled.reshape(1, -1)
+#
+#
+#
+#         #print(type(ix_array))
+#         #print(ix_array.shape)
+#
+#         generated_text.append(ix_to_char[ix_array[-1]])  # Append corresponding char for index
+#
+#     # Combine generated sequence to string. If an end-of-limerick char was generated, return sequence up to this char,
+#     # else return the complete sequence. Also remove the start-of-limerick char in the beginning.
+#     return ''.join(generated_text).split('€')[0][1:]
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Generates text character-wise based on a trained model. The preset for generated length is 200 chars - 
 if an end-of-limerick char occurs in the text, only the string up to this char will be used.
+
+METHOD WITHOUT SAMPLING
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 def generate_text(model, length, vocab_size, ix_to_char, char_to_ix):
 
@@ -46,13 +151,6 @@ def generate_text(model, length, vocab_size, ix_to_char, char_to_ix):
         # Note to self: X[i:j:k] means i = starting index, j = stopping index and k = step size
         X[0, i, :][ix_array[-1]] = 1            # Initialize
 
-        # in stateful model, it needs a (seq_length)
-        # ValueError: Error when checking : expected lstm_1_input to have shape (50, 71) but got array with shape (1, 71)
-
-        # Predict sequence up to i + 1
-        #print(X.shape)
-        #geht anscheinend nicht um X.shape, das ist (51, 200, 33) wenn man es ändert
-
         ix_array = np.argmax(model.predict(X[:, :i + 1, :], verbose=0)[0], 1)
 
         generated_text.append(ix_to_char[ix_array[-1]])  # Append corresponding char for index
@@ -62,8 +160,105 @@ def generate_text(model, length, vocab_size, ix_to_char, char_to_ix):
     return ''.join(generated_text).split('€')[0][1:]
 
 
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Method for loading the training data while removing punctuation and digits.
+Uses padding (for stateful=False model)
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+def load_data_with_padding(data_dir):
+    data = []
+
+    # Collect and prepare the data as chars:
+    with open(data_dir, 'r') as infile:
+        for line in infile:
+            # Remove all punctuation except: [- ' € § \n|
+            line_char_array_1 = re.sub(r"[^\w'\s€§-]+", '', line)
+            # Remove digits and underscore:
+            line_char_array_2 = list(re.sub(r"[\d_]+", '', line_char_array_1))
+            data.extend(line_char_array_2)
+    infile.close()
+
+    chars = list(set(data))
+    VOCAB_SIZE = len(chars)
+
+    ix_to_char = {ix: char for ix, char in enumerate(chars)}
+    char_to_ix = {char: ix for ix, char in enumerate(chars)}
+
+    all_sequences = []
+    current_sequence = []
+
+    # Collect all single training examples and append them to list:
+    for i in range(len(data)):
+        if data[i] != '€':
+            current_sequence += data[i]
+        else:
+            current_sequence += data[i]
+            all_sequences.append(current_sequence)
+            current_sequence = []
+
+    # Save same data with corresponding indices instead of chars:
+    all_sequences_as_indices = []
+    for i in range(len(all_sequences)):
+        current_indices = [int(char_to_ix[value]) for value in all_sequences[i]]
+        all_sequences_as_indices.append(current_indices)
+
+    #print(char_to_ix)
+    #print(all_sequences[0])
+    #print(all_sequences_as_indices[0])
+
+    # Apply padding to sequences:
+    padded_sequences = pad_sequences(all_sequences_as_indices, value=99)
+    #print(padded_sequences[0])
+
+    assert(len(all_sequences) == len(all_sequences_as_indices) == len(padded_sequences))
+
+    num_of_seq = len(padded_sequences)
+    seq_length = len(padded_sequences[0])
+
+    X = np.zeros((num_of_seq, seq_length, VOCAB_SIZE))
+    y = np.zeros((num_of_seq, seq_length, VOCAB_SIZE))
+    #print(X.shape)
+
+    # Fill training data frame with one-hot encoding of X values:
+
+    # For all training examples:
+    for i in range(0, num_of_seq):
+
+        current_sequence = padded_sequences[i]                         # Current sequence values
+        input_sequence = np.zeros((seq_length, VOCAB_SIZE))         # Input frame for one-hot encoding
+
+        # For all positions in the current sequence:
+        for j in range(seq_length):
+            # If we get the padding value 99, do nothing (then the one-hot encoding will be all zeros for this position)
+            if current_sequence[j] == 99:
+                pass
+            else:
+                input_sequence[j][current_sequence[j]] = 1        # Create one-hot encoding for current sequence
+            X[i] = input_sequence
+
+        # Create target sequence that is shifted by one position compared to current_sequence:
+        y_sequence = padded_sequences[i][1:]                # Current training example without first value
+        y_sequence = np.append(y_sequence, 99)              # Append padding value at the end (must have same length)
+
+        assert(len(current_sequence) == len(y_sequence))
+
+        target_sequence = np.zeros((seq_length, VOCAB_SIZE))    # Target input frame for one-hot encoding
+
+        # For all positions in the current sequence:
+        for j in range(seq_length):
+            # If we get the padding value 99, do nothing (then the one-hot encoding will be all zeros for this position)
+            if y_sequence[j] == 99:
+                pass
+            else:
+                target_sequence[j][y_sequence[j]] = 1  # Create one-hot encoding for target sequence
+            y[i] = target_sequence
+
+        return X, y, VOCAB_SIZE, ix_to_char, char_to_ix
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Method for loading the training data while removing punctuation and digits 
+(for stateful=True model)
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 def load_data(data_dir, seq_length):
 
@@ -95,8 +290,11 @@ def load_data(data_dir, seq_length):
 
     for i in range(0, num_of_seq):
         X_sequence = data[i * seq_length:(i + 1) * seq_length]
+
         X_sequence_ix = [char_to_ix[value] for value in X_sequence]
         input_sequence = np.zeros((seq_length, VOCAB_SIZE))
+
+
         for j in range(seq_length):
             input_sequence[j][X_sequence_ix[j]] = 1.
             X[i] = input_sequence
@@ -150,5 +348,3 @@ of training examples is divisible by the batch size.
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 def get_new_data_length(number_of_samples, batch_size):
     return number_of_samples - (number_of_samples % batch_size)
-
-

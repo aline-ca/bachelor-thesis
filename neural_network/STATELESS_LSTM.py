@@ -47,7 +47,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument('-training_data_dir', default='data/limericks_with_markers.txt')
 ap.add_argument('-batch_size', type=int, default=50)
 ap.add_argument('-layer_num', type=int, default=2)
-ap.add_argument('-seq_length', type=int, default=50)
+ap.add_argument('-seq_length', type=int, default=200)
 ap.add_argument('-hidden_dim', type=int, default=500)
 ap.add_argument('-generate_length', type=int, default=200)
 ap.add_argument('-epochs', type=int, default=200)
@@ -95,9 +95,10 @@ if not os.path.exists(weight_dir):
 #####################################################################
 
 # Creating training data
-X, y, VOCAB_SIZE, ix_to_char, char_to_ix = load_data(TRAIN_DATA_DIR, SEQ_LENGTH)
+X, y, VOCAB_SIZE, ix_to_char, char_to_ix = load_data_with_padding(TRAIN_DATA_DIR)
 
-logfile.write('Vocabulary size (Total number of different chars): {}\n\n\n'.format(VOCAB_SIZE))
+logfile.write('Vocabulary size (Total number of different chars): {}\n'.format(VOCAB_SIZE))
+logfile.write('Number of training examples: {}\n\n\n'.format(len(X)))
 
 # Creating and compiling the Network
 model = Sequential()
