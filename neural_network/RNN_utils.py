@@ -20,14 +20,19 @@ from keras.preprocessing.sequence import pad_sequences
 
 # Function for sampling the model predictions to a specified temperature.
 def sample(preds, temperature=1.0):
-    # Reshape to 1D array
-    preds = preds[0, :]
+
+    #print("Sampling next character...")
 
     preds = np.asarray(preds).astype('float64')
     preds = np.log(preds) / temperature
     exp_preds = np.exp(preds)
     preds = exp_preds / np.sum(exp_preds)
+
+    #print("Prediction array before multinomial redistribution: ")
+    #print(preds)
+
     probas = np.random.multinomial(1, preds, 1)
+
     return np.argmax(probas)
 
 
@@ -37,87 +42,48 @@ Uses sampling for specified temperature now.
 Preset length is 200 chars -
 if an end-of-limerick char occurs in the text, only the string up to this char will be used.
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-def generate_text(model, length, vocab_size, ix_to_char, char_to_ix, temperature):
+def generate_text(model, length, vocab_size, ix_to_char, char_to_ix, temperature=1.0):
 
     generated_text = ['§']                              # Start generation with start-of-limerick sign
 
-    # entspricht seed-text
-    start_index = random.randint(0, len(text) - maxlen - 1)
-    generated_text = text[start_index: start_index + maxlen]     #length of complete data?
-
-    #complete_text = generated_text
-
-    # hier kommt stattdessen auch length hin:
-    for i in range(400):
+    for i in range(length):
         sampled = np.zeros((1, length, vocab_size))
 
+        # One-hot encode characters generated so far:
         for t, char in enumerate(generated_text):
             sampled[0, t, char_to_ix[char]] = 1.
 
-        preds = model.predict(sampled, verbose=0)[0]
+        # Predict next character, given the generated text available so far:
+        preds = model.predict(sampled[:, :i + 1, :], verbose=0)[0]
+
+        # Returns an array with shape (i, vocab_size) where i corresponds to the current position in the generated
+        # sequence. For sampling, we are only interested in the last array that encodes the char probabilities of
+        # the current timestep (= next predicted character).
+        preds = preds[-1]
+
+        #print("Prediction shape in main function: {}".format(preds.shape))
+        #print(preds)
+
+        #print("Current timestep: {} ".format(i))
+        #print("Shape of preds: {} ".format(preds.shape))
+
         next_index = sample(preds, temperature)
         next_char = ix_to_char[next_index]
 
+        #print("Next character: " + next_char)
+        #print("Generated text: {}".format(generated_text))
+
+        if next_char == '€':
+            generated_text += next_char
+            break
+
         generated_text += next_char
-        complete_text += generated_text
 
-        generated_text = generated_text[1:]
+    # Return the complete sequence. Also remove the start-of-limerick char in the beginning.
+    #return ''.join(generated_text)[1:]
+    return ''.join(generated_text)
 
 
-
-    # Combine generated sequence to string. If an end-of-limerick char was generated, return sequence up to this char,
-    # else return the complete sequence. Also remove the start-of-limerick char in the beginning.
-    return ''.join(complete_text).split('€')[0][1:]
-
-#
-# """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-# Generates text character-wise based on a trained model. The preset for generated length is 200 chars -
-# if an end-of-limerick char occurs in the text, only the string up to this char will be used.
-# """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-# def generate_text(model, length, vocab_size, ix_to_char, char_to_ix, temperature):
-#
-#     generated_text = ['§']                              # Start generation with start-of-limerick sign
-#     ix_array = [char_to_ix[generated_text[-1]]]         # First entry of index array
-#
-#     X = np.zeros((1, length, vocab_size))           # Create input data X
-#
-#     X[0, 0, :][ix_array[-1]] = 1                    # Initialize value for start sign '§' (at position 0)
-#
-#     # Now predict rest of sequence char by char, based on these two chars (start at 1):
-#     for i in range(length):
-#
-#         # Note to self: X[i:j:k] means i = starting index, j = stopping index and k = step size
-#         X[0, i, :][ix_array[-1]] = 1            # Initialize
-#
-#         # Predict sequence up to i + 1
-#         #ix_array = np.argmax(model.predict(X[:, :i + 1, :], verbose=0)[0], 1)
-#         #print(type(ix_array))
-#
-#
-#         #preds = model.predict(X[:, :i + 1, :], verbose=0)[0]
-#
-#
-#         print(type(preds))
-#         print(preds.shape)
-#
-#
-#         sampled = sample(preds, temperature=temperature)
-#
-#         print(type(sampled))
-#         print(sampled.shape)
-#         # Reshape back to 2D array
-#         ix_array = sampled.reshape(1, -1)
-#
-#
-#
-#         #print(type(ix_array))
-#         #print(ix_array.shape)
-#
-#         generated_text.append(ix_to_char[ix_array[-1]])  # Append corresponding char for index
-#
-#     # Combine generated sequence to string. If an end-of-limerick char was generated, return sequence up to this char,
-#     # else return the complete sequence. Also remove the start-of-limerick char in the beginning.
-#     return ''.join(generated_text).split('€')[0][1:]
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Generates text character-wise based on a trained model. The preset for generated length is 200 chars - 
@@ -125,7 +91,7 @@ if an end-of-limerick char occurs in the text, only the string up to this char w
 
 METHOD WITHOUT SAMPLING
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-def generate_text(model, length, vocab_size, ix_to_char, char_to_ix):
+def generate_text_old(model, length, vocab_size, ix_to_char, char_to_ix):
 
     generated_text = ['§']                              # Start generation with start-of-limerick sign
     ix_array = [char_to_ix[generated_text[-1]]]         # First entry of index array
@@ -152,6 +118,9 @@ def generate_text(model, length, vocab_size, ix_to_char, char_to_ix):
         X[0, i, :][ix_array[-1]] = 1            # Initialize
 
         ix_array = np.argmax(model.predict(X[:, :i + 1, :], verbose=0)[0], 1)
+        print(ix_array)
+        print(len(ix_array))
+
 
         generated_text.append(ix_to_char[ix_array[-1]])  # Append corresponding char for index
 

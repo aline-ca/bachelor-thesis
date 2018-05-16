@@ -47,7 +47,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument('-training_data_dir', default='data/limericks_with_markers.txt')
 ap.add_argument('-batch_size', type=int, default=50)
 ap.add_argument('-layer_num', type=int, default=2)
-ap.add_argument('-seq_length', type=int, default=400)
+ap.add_argument('-seq_length', type=int, default=200)
 ap.add_argument('-hidden_dim', type=int, default=500)
 ap.add_argument('-generate_length', type=int, default=200)
 ap.add_argument('-epochs', type=int, default=200)
@@ -104,7 +104,8 @@ X = X[:new_length]
 y = y[:new_length]
 
 logfile.write('Vocabulary size (Total number of different chars): {}\n'.format(VOCAB_SIZE))
-logfile.write('Number of training examples: {}\n\n\n'.format(len(X)))
+logfile.write('Number of training examples: {}\n\n'.format(len(X)))
+logfile.write('Index to char map: {}\n\n\n'.format(ix_to_char))
 
 
 # MODEL FOR TRAINING (stateful=True):
@@ -129,7 +130,6 @@ for j in range(LAYER_NUM - 1):
 predict_model.add(TimeDistributed(Dense(VOCAB_SIZE)))
 predict_model.add(Activation('softmax'))
 predict_model.compile(loss="categorical_crossentropy", optimizer="rmsprop")
-
 
 train_model.save_weights(weight_dir + '/weights_epoch_{}.hdf5'.format(0))
 predict_model.load_weights(weight_dir + '/weights_epoch_{}.hdf5'.format(0))
@@ -162,16 +162,18 @@ while current_epoch <= EPOCHS:
   train_model.save_weights(weight_dir + '/weights_epoch_{}.hdf5'.format(current_epoch))
   predict_model.load_weights(weight_dir + '/weights_epoch_{}.hdf5'.format(current_epoch))
 
-  generated_text = generate_text(predict_model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char, char_to_ix)
-  print('\n\n' + generated_text)
 
-  logfile.write(generated_text + '\n\n')
+  for temperature in [0.2, 0.5, 1.0, 1.2]:
+      generated_text = generate_text(predict_model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char, char_to_ix, temperature)
+      print('\n\n' + str(temperature))
+      print('\n\n' + generated_text)
+
+      logfile.write("Temperature: {} \n".format(str(temperature)))
+      logfile.write(generated_text + '\n\n')
 
   loss = round(hist.history['loss'][0], 6)
   logfile.write("Loss: {} \n".format(str(loss)))
-
   current_epoch += 1
-
 
 logfile.close()
 
