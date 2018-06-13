@@ -97,6 +97,10 @@ if not os.path.exists(weight_dir):
 # Creating training data
 X, y, VOCAB_SIZE, ix_to_char, char_to_ix = load_data(TRAIN_DATA_DIR, SEQ_LENGTH)
 
+print("VOCAB_SIZE: " + str(VOCAB_SIZE))
+print("ix_to_char: " + str(ix_to_char))
+print("char_to_ix: " + str(char_to_ix))
+
 # For stateful model, cut X and y at a length so that the number of training examples is divisible by batch size:
 new_length = get_new_data_length(len(X), BATCH_SIZE)
 

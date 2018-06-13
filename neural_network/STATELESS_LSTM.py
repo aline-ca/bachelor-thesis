@@ -24,10 +24,12 @@ from keras.models import Sequential
 from keras.layers.core import Dense, Activation
 from keras.layers.recurrent import LSTM
 from keras.layers.wrappers import TimeDistributed
+from keras.layers.core import Masking
 from keras.callbacks import History
 from keras import backend as K
 from RNN_utils import *
 from datetime import datetime
+from keras import optimizers
 
 # Disable warning "Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA"
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -44,7 +46,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 """
 # Parsing arguments for Network
 ap = argparse.ArgumentParser()
-ap.add_argument('-training_data_dir', default='data/limericks_with_markers.txt')
+ap.add_argument('-training_data_dir', default='data/small_limericks_with_markers.txt')
 ap.add_argument('-batch_size', type=int, default=50)
 ap.add_argument('-layer_num', type=int, default=2)
 ap.add_argument('-seq_length', type=int, default=200)
@@ -96,12 +98,20 @@ if not os.path.exists(weight_dir):
 
 # Creating training data
 X, y, VOCAB_SIZE, ix_to_char, char_to_ix = load_data_with_padding(TRAIN_DATA_DIR)
+print(X.shape)
 
 logfile.write('Vocabulary size (Total number of different chars): {}\n'.format(VOCAB_SIZE))
 logfile.write('Number of training examples: {}\n\n\n'.format(len(X)))
 
 # Creating and compiling the Network
 model = Sequential()
+
+mask_value=0.
+print(type(mask_value))
+
+# Add masking layer to ignore dummy vectors that were created through padding:
+model.add(Masking(mask_value=0., input_shape=(None, VOCAB_SIZE)))
+
 model.add(LSTM(HIDDEN_DIM, return_sequences=True, input_shape=(None, VOCAB_SIZE)))
 
 for i in range(LAYER_NUM - 1):
@@ -109,7 +119,9 @@ for i in range(LAYER_NUM - 1):
 
 model.add(TimeDistributed(Dense(VOCAB_SIZE)))
 model.add(Activation('softmax'))
-model.compile(loss="categorical_crossentropy", optimizer="rmsprop")
+rms = optimizers.RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=0.0, clipnorm=0.5)
+adam = optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False, clipnorm=0.5)
+model.compile(loss="categorical_crossentropy", optimizer=rms)
 
 # Generate some sample text before starting the training:
 sample_text = generate_text(model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char, char_to_ix)
@@ -131,12 +143,17 @@ while current_epoch <= EPOCHS:
   logfile.write('\n\nEpoch: {}\n'.format(current_epoch))
 
   # Train model for one epoch, then generate some text, then continue training, and so on.
-  hist = model.fit(X, y, batch_size=BATCH_SIZE, epochs=1, shuffle=False, callbacks=[history])
+  hist = model.fit(X, y, batch_size=BATCH_SIZE, epochs=1, shuffle=True, callbacks=[history])
   # (Note: Need to define callbacks if we want to extract the loss to write it into logfile.)
 
-  generated_text = generate_text(model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char, char_to_ix)
-  print('\n\n' + generated_text)
-  logfile.write(generated_text + '\n\n')
+
+  for temperature in [0.2, 0.5, 1.0, 1.2]:
+      generated_text = generate_text(model, GENERATE_LENGTH, VOCAB_SIZE, ix_to_char, char_to_ix, temperature)
+      print('\n\n' + str(temperature))
+      print('\n\n' + generated_text)
+
+      logfile.write("Temperature: {} \n".format(str(temperature)))
+      logfile.write(generated_text + '\n\n')
 
   loss = round(hist.history['loss'][0], 6)
   logfile.write("Loss: {} \n".format(str(loss)))

@@ -147,8 +147,10 @@ def load_data_with_padding(data_dir):
             data.extend(line_char_array_2)
     infile.close()
 
-    chars = list(set(data))
+    chars = sorted(list(set(data)))
+    #print(chars)
     VOCAB_SIZE = len(chars)
+
 
     ix_to_char = {ix: char for ix, char in enumerate(chars)}
     char_to_ix = {char: ix for ix, char in enumerate(chars)}
@@ -172,11 +174,18 @@ def load_data_with_padding(data_dir):
         all_sequences_as_indices.append(current_indices)
 
     #print(char_to_ix)
-    #print(all_sequences[0])
-    #print(all_sequences_as_indices[0])
+    # print(all_sequences[0])
+    # print(all_sequences_as_indices[0])
+    # print(len(all_sequences[0]))
+    # print(len(all_sequences_as_indices[0]))
 
+
+    #TODO: Change padding back to pre, or remove for default
     # Apply padding to sequences:
-    padded_sequences = pad_sequences(all_sequences_as_indices, value=99)
+    padded_sequences = pad_sequences(all_sequences_as_indices, padding='post', value=99)
+
+    #print(padded_sequences[0])
+    #print(len(padded_sequences[0]))
     #print(padded_sequences[0])
 
     assert(len(all_sequences) == len(all_sequences_as_indices) == len(padded_sequences))
@@ -186,7 +195,6 @@ def load_data_with_padding(data_dir):
 
     X = np.zeros((num_of_seq, seq_length, VOCAB_SIZE))
     y = np.zeros((num_of_seq, seq_length, VOCAB_SIZE))
-    #print(X.shape)
 
     # Fill training data frame with one-hot encoding of X values:
 
@@ -202,8 +210,9 @@ def load_data_with_padding(data_dir):
             if current_sequence[j] == 99:
                 pass
             else:
-                input_sequence[j][current_sequence[j]] = 1        # Create one-hot encoding for current sequence
+                input_sequence[j][current_sequence[j]] = 1.        # Create one-hot encoding for current sequence
             X[i] = input_sequence
+
 
         # Create target sequence that is shifted by one position compared to current_sequence:
         y_sequence = padded_sequences[i][1:]                # Current training example without first value
@@ -216,12 +225,21 @@ def load_data_with_padding(data_dir):
         # For all positions in the current sequence:
         for j in range(seq_length):
             # If we get the padding value 99, do nothing (then the one-hot encoding will be all zeros for this position)
-            if y_sequence[j] == 99:
+            if y_sequence[j] ==  99:
                 pass
             else:
-                target_sequence[j][y_sequence[j]] = 1  # Create one-hot encoding for target sequence
+                target_sequence[j][y_sequence[j]] = 1.  # Create one-hot encoding for target sequence
             y[i] = target_sequence
 
+        #print("Length of first training example: {} ".format(len(X[0])))
+        #print("Second dimension length: {} ".format(len(X[0][0])))
+
+        #print("X dtype: {} ".format(X.dtype))
+        #print("y dtype: {} ".format(y.dtype))
+
+        #print(X[0][0])
+        #print(type([0][0]))
+        #print(type([0][0]))
         return X, y, VOCAB_SIZE, ix_to_char, char_to_ix
 
 
@@ -243,7 +261,7 @@ def load_data(data_dir, seq_length):
             data.extend(line_char_array_2)
     infile.close()
 
-    chars = list(set(data))
+    chars = sorted(list(set(data)))
     VOCAB_SIZE = len(chars)
 
     print('Data length: {} characters'.format(len(data)))
@@ -262,7 +280,6 @@ def load_data(data_dir, seq_length):
 
         X_sequence_ix = [char_to_ix[value] for value in X_sequence]
         input_sequence = np.zeros((seq_length, VOCAB_SIZE))
-
 
         for j in range(seq_length):
             input_sequence[j][X_sequence_ix[j]] = 1.
