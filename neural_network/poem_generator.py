@@ -71,7 +71,3 @@ for i in range(NUM_OF_POEMS):
     print(generated_text)
 
 
-# Jetzt nur noch in Datei schreiben statt in Commandozeile
-
-
-
