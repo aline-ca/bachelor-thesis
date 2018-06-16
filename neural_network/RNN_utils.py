@@ -74,14 +74,14 @@ def generate_text(model, length, vocab_size, ix_to_char, char_to_ix, temperature
         #print("Generated text: {}".format(generated_text))
 
         if next_char == '€':
-            generated_text += next_char
+            #generated_text += next_char
             break
 
         generated_text += next_char
 
     # Return the complete sequence. Also remove the start-of-limerick char in the beginning.
-    #return ''.join(generated_text)[1:]
-    return ''.join(generated_text)
+    return ''.join(generated_text)[1:]
+    #return ''.join(generated_text)
 
 
 

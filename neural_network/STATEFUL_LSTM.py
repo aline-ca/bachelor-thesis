@@ -21,6 +21,7 @@ import matplotlib as mpl
 mpl.use('TkAgg')
 import numpy as np
 from keras.models import Sequential
+from keras.models import load_model
 from keras.layers.core import Dense, Activation
 from keras.layers.recurrent import LSTM
 from keras.layers.wrappers import TimeDistributed
@@ -161,8 +162,6 @@ while current_epoch <= EPOCHS:
   hist = train_model.fit(X, y, batch_size=BATCH_SIZE, shuffle=False, epochs=1, callbacks=[history])
   # (Note: Need to define callbacks if we want to extract the loss to write it into logfile.)
 
-  #train_model.save_weights('lstm_model_test.h5')
-  #predict_model.load_weights('lstm_model_test.h5')
   train_model.save_weights(weight_dir + '/weights_epoch_{}.hdf5'.format(current_epoch))
   predict_model.load_weights(weight_dir + '/weights_epoch_{}.hdf5'.format(current_epoch))
 
@@ -177,7 +176,13 @@ while current_epoch <= EPOCHS:
 
   loss = round(hist.history['loss'][0], 6)
   logfile.write("Loss: {} \n".format(str(loss)))
+
+  # Save prediction model every 10 epochs
+  if current_epoch % 10 == 0:
+    predict_model.save(ID + '_SAVED_epoch_{}.h5'.format(current_epoch))
+
   current_epoch += 1
+
 
 logfile.close()
 
