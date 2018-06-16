@@ -18,29 +18,24 @@ import re
 import random
 from keras.preprocessing.sequence import pad_sequences
 
-# Function for sampling the model predictions to a specified temperature.
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    Function for sampling the model predictions to a specified temperature.
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 def sample(preds, temperature=1.0):
-
-    #print("Sampling next character...")
 
     preds = np.asarray(preds).astype('float64')
     preds = np.log(preds) / temperature
     exp_preds = np.exp(preds)
     preds = exp_preds / np.sum(exp_preds)
-
-    #print("Prediction array before multinomial redistribution: ")
-    #print(preds)
-
     probas = np.random.multinomial(1, preds, 1)
 
     return np.argmax(probas)
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Generates text character-wise based on a trained model. 
-Uses sampling for specified temperature now.
-Preset length is 200 chars -
-if an end-of-limerick char occurs in the text, only the string up to this char will be used.
+    Generates text character-wise based on a trained model. Uses sampling for specified temperature.
+    Starts with begin-of-limerick char and ends the generation process if an end-of-limerick char occurred
+    (or after 200 chars if this char is never generated).
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 def generate_text(model, length, vocab_size, ix_to_char, char_to_ix, temperature=1.0):
 
@@ -58,38 +53,26 @@ def generate_text(model, length, vocab_size, ix_to_char, char_to_ix, temperature
 
         # Returns an array with shape (i, vocab_size) where i corresponds to the current position in the generated
         # sequence. For sampling, we are only interested in the last array that encodes the char probabilities of
-        # the current timestep (= next predicted character).
+        # the current time step (= next predicted character).
         preds = preds[-1]
-
-        #print("Prediction shape in main function: {}".format(preds.shape))
-        #print(preds)
-
-        #print("Current timestep: {} ".format(i))
-        #print("Shape of preds: {} ".format(preds.shape))
 
         next_index = sample(preds, temperature)
         next_char = ix_to_char[next_index]
 
-        #print("Next character: " + next_char)
-        #print("Generated text: {}".format(generated_text))
-
         if next_char == '€':
-            #generated_text += next_char
             break
 
         generated_text += next_char
 
     # Return the complete sequence. Also remove the start-of-limerick char in the beginning.
     return ''.join(generated_text)[1:]
-    #return ''.join(generated_text)
-
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Generates text character-wise based on a trained model. The preset for generated length is 200 chars - 
 if an end-of-limerick char occurs in the text, only the string up to this char will be used.
 
-METHOD WITHOUT SAMPLING
+GENERATION METHOD WITHOUT SAMPLING
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 def generate_text_old(model, length, vocab_size, ix_to_char, char_to_ix):
 
@@ -121,13 +104,11 @@ def generate_text_old(model, length, vocab_size, ix_to_char, char_to_ix):
         print(ix_array)
         print(len(ix_array))
 
-
         generated_text.append(ix_to_char[ix_array[-1]])  # Append corresponding char for index
 
     # Combine generated sequence to string. If an end-of-limerick char was generated, return sequence up to this char,
     # else return the complete sequence. Also remove the start-of-limerick char in the beginning.
     return ''.join(generated_text).split('€')[0][1:]
-
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -148,9 +129,7 @@ def load_data_with_padding(data_dir):
     infile.close()
 
     chars = sorted(list(set(data)))
-    #print(chars)
     VOCAB_SIZE = len(chars)
-
 
     ix_to_char = {ix: char for ix, char in enumerate(chars)}
     char_to_ix = {char: ix for ix, char in enumerate(chars)}
@@ -173,20 +152,9 @@ def load_data_with_padding(data_dir):
         current_indices = [int(char_to_ix[value]) for value in all_sequences[i]]
         all_sequences_as_indices.append(current_indices)
 
-    #print(char_to_ix)
-    # print(all_sequences[0])
-    # print(all_sequences_as_indices[0])
-    # print(len(all_sequences[0]))
-    # print(len(all_sequences_as_indices[0]))
-
-
     #TODO: Change padding back to pre, or remove for default
     # Apply padding to sequences:
     padded_sequences = pad_sequences(all_sequences_as_indices, padding='post', value=99)
-
-    #print(padded_sequences[0])
-    #print(len(padded_sequences[0]))
-    #print(padded_sequences[0])
 
     assert(len(all_sequences) == len(all_sequences_as_indices) == len(padded_sequences))
 
@@ -213,7 +181,6 @@ def load_data_with_padding(data_dir):
                 input_sequence[j][current_sequence[j]] = 1.        # Create one-hot encoding for current sequence
             X[i] = input_sequence
 
-
         # Create target sequence that is shifted by one position compared to current_sequence:
         y_sequence = padded_sequences[i][1:]                # Current training example without first value
         y_sequence = np.append(y_sequence, 99)              # Append padding value at the end (must have same length)
@@ -231,15 +198,6 @@ def load_data_with_padding(data_dir):
                 target_sequence[j][y_sequence[j]] = 1.  # Create one-hot encoding for target sequence
             y[i] = target_sequence
 
-        #print("Length of first training example: {} ".format(len(X[0])))
-        #print("Second dimension length: {} ".format(len(X[0][0])))
-
-        #print("X dtype: {} ".format(X.dtype))
-        #print("y dtype: {} ".format(y.dtype))
-
-        #print(X[0][0])
-        #print(type([0][0]))
-        #print(type([0][0]))
         return X, y, VOCAB_SIZE, ix_to_char, char_to_ix
 
 
@@ -281,40 +239,6 @@ def load_data(data_dir, seq_length):
         X_sequence_ix = [char_to_ix[value] for value in X_sequence]
         input_sequence = np.zeros((seq_length, VOCAB_SIZE))
 
-        for j in range(seq_length):
-            input_sequence[j][X_sequence_ix[j]] = 1.
-            X[i] = input_sequence
-
-        y_sequence = data[i * seq_length + 1:(i + 1) * seq_length + 1]
-        y_sequence_ix = [char_to_ix[value] for value in y_sequence]
-        target_sequence = np.zeros((seq_length, VOCAB_SIZE))
-        for j in range(seq_length):
-            target_sequence[j][y_sequence_ix[j]] = 1.
-            y[i] = target_sequence
-    return X, y, VOCAB_SIZE, ix_to_char, char_to_ix
-
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Old method for loading the training data including punctuation and numbers.
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-def load_data_with_punct(data_dir, seq_length):
-    data = open(data_dir, 'r').read()
-
-    chars = list(set(data))
-    VOCAB_SIZE = len(chars)
-
-    print('Data length: {} characters'.format(len(data)))
-    print('Vocabulary size: {} characters'.format(VOCAB_SIZE))
-
-    ix_to_char = {ix: char for ix, char in enumerate(chars)}
-    char_to_ix = {char: ix for ix, char in enumerate(chars)}
-
-    X = np.zeros((int(len(data) / seq_length), seq_length, VOCAB_SIZE))
-    y = np.zeros((int(len(data) / seq_length), seq_length, VOCAB_SIZE))
-    for i in range(0, int(len(data) / seq_length)):
-        X_sequence = data[i * seq_length:(i + 1) * seq_length]
-        X_sequence_ix = [char_to_ix[value] for value in X_sequence]
-        input_sequence = np.zeros((seq_length, VOCAB_SIZE))
         for j in range(seq_length):
             input_sequence[j][X_sequence_ix[j]] = 1.
             X[i] = input_sequence
