@@ -45,7 +45,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 """
 # Parsing arguments for Network
 ap = argparse.ArgumentParser()
-ap.add_argument('-training_data_dir', default='data/limericks_with_markers.txt')
+ap.add_argument('-training_data_dir', default='./data/limericks_with_markers.txt')
 ap.add_argument('-batch_size', type=int, default=50)
 ap.add_argument('-layer_num', type=int, default=2)
 ap.add_argument('-seq_length', type=int, default=200)
