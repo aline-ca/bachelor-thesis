@@ -17,6 +17,7 @@ import matplotlib as mpl
 mpl.use('TkAgg')
 from RNN_utils import *
 from keras.models import load_model
+from keras import backend as K
 import sys
 
 """  
@@ -71,3 +72,11 @@ for i in range(NUM_OF_POEMS):
     print(generated_text)
 
 
+"""
+About every fifth run (pretty randomly) there will be an error message from tensorflow: 
+TypeError: 'NoneType' object is not callable
+This seems to be a bug - see following issue:
+https://github.com/tensorflow/tensorflow/issues/3388
+Importing keras backend and clearing the session fixed it for me.
+"""
+K.clear_session()

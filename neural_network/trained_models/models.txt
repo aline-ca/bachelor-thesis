@@ -8,4 +8,10 @@ NEURONS PER LAYER: 		    500
 TRAINING SEQUENCE LENGTH: 200
 TRAINED FOR (EPOCHS): 		200
 ————————————————————————————————————
-
+MODEL 12: STATEFUL LSTM
+HIDDEN LAYERS:              3
+BATCH SIZE:                50
+NEURONS PER LAYER:        500
+TRAINING SEQUENCE LENGTH: 200
+TRAINED FOR (EPOCHS):     200
+————————————————————————————————————
