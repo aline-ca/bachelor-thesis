@@ -3,7 +3,7 @@
 
 #####################################################################
 #                                                                   #
-# File:                           Limerick_2.py                     #
+# File:                           Limerick.py                       #
 # Author:                         Aline Castendiek                  #
 # Student ID:                     768297                            #
 # Date:                           14/06/18                          #
@@ -34,11 +34,11 @@ class Limerick(object):
         self.syllable_counts = self.__get_syllable_count_list__()                              # List of syllable counts
 
         # Scores
-        self.verse_count_score = self.__evaluate_syllable_counts__()                            # Score for verse counts
-        self.metric_score = self.__evaluate_metric_pattern__()                                  # Metric score
+        self.verse_count_score = self.__evaluate_syllable_counts__()                           # Score for verse counts
+        self.metric_score = self.__evaluate_metric_pattern__()                                 # Metric score
         self.rhyme_score = self.__compute_rhyme_score_for_poem__()                             # Rhyme score
 
-        self.verse_3_4_shorter = self.__check_whether_verse_3_4_shorter__()                     # Are verse 3 and 4 shorter?
+        self.verse_3_4_shorter = self.__check_whether_verse_3_4_shorter__()                    # Are verse 3 and 4 shorter?
 
     def __collect_verses_and_phonemes__(self, limerick, phonemes):
         verses = [verse for verse in limerick]
@@ -260,6 +260,7 @@ class Limerick(object):
 
 
     # Computes rhyme score for two phonetic representations.
+    # TODO: Refine this method to include similar phonemes.
     def __compute_rhyme_score__(self, phones_1, phones_2):
 
         # Same word, no good rhyme! Return worst score.
@@ -328,11 +329,4 @@ class Limerick(object):
                 score_2_5 = 0.0
 
             return (score_1_2 + score_3_4 + score_1_5 + score_2_5) / 4
-
-
-"""
-TODOS:
-2. Reime-Score: ähnliche Reime einbauen und Score verfeinern
-"""
-
 

@@ -9,7 +9,7 @@
 # Date:                           10/02/18                          #
 # Operating system:               Mac OS X El Capitan [10.11.6]     #
 # Python version:                 3.5.0                             #
-#                                                                   #                                                         #
+#                                                                   #
 #####################################################################
 
 from EvaluationUtils import phoneme_mapping
