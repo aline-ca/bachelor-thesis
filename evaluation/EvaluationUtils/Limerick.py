@@ -260,25 +260,30 @@ class Limerick(object):
 
 
     # Computes rhyme score for two phonetic representations.
-    # TODO: Refine this method to include similar phonemes.
     def __compute_rhyme_score__(self, phones_1, phones_2):
 
-        # Same word, no good rhyme! Return worst score.
+        # Case 1: Same word. No good rhyme! Return worst score.
         if phones_1 == phones_2:
             return 0.0
 
-        # If one line is missing, return worst score as well.
+        # Case 2: One line missing. Return worst score as well.
         if phones_1 == [] or phones_2 == []:
             return 0.0
 
         rhyming_part_1 = self.__get_rhyming_part__(phones_1)
         rhyming_part_2 = self.__get_rhyming_part__(phones_2)
 
-        # Found perfect rhyme
+        # Case 3: Perfect rhyme. Return best score.
         if rhyming_part_1 == rhyming_part_2:
             return 1.0
 
-        # Else compute score based on phonetic edit distance:
+        if len(rhyming_part_1) == len(rhyming_part_2):
+
+            # Case 4: Imperfect rhyme. Return best score as well.
+            if self.__is_imperfect_rhyme__(rhyming_part_1, rhyming_part_2):
+                return 1.0
+
+        # Case 5: Compute score based on phonetic edit distance:
         ed = phonetic_edit_distance.compute_phone_ed(rhyming_part_1, rhyming_part_2)
         if ed == 1: return 0.9
         if ed == 2: return 0.8
@@ -329,4 +334,56 @@ class Limerick(object):
                 score_2_5 = 0.0
 
             return (score_1_2 + score_3_4 + score_1_5 + score_2_5) / 4
+
+
+    # Function that returns a list of all similar phonemes for a given phoneme.
+    def __get_similar_phonemes__(self, phoneme):
+
+        # similar vowels AA, AE, AH, AO, AW
+        if phoneme == 'AA': return ['AE', 'AH', 'AO', 'AW']
+        if phoneme == 'AE': return ['AA', 'AH', 'AO', 'AW']
+        if phoneme == 'AH': return ['AE', 'AA', 'AO', 'AW']
+        if phoneme == 'AO': return ['AE', 'AA', 'AH', 'AW']
+        if phoneme == 'AW': return ['AE', 'AA', 'AO', 'AH']
+
+        # similar vowels IH, IY
+        if phoneme == 'IH': return ['IY']
+        if phoneme == 'IY': return ['IH']
+
+        # similar vowels UH, UW
+        if phoneme == 'UH': return ['UW']
+        if phoneme == 'UW': return ['UH']
+
+        # similar consonants
+        if phoneme == 'M': return ['N', 'NG']
+        if phoneme == 'N': return ['M', 'NG']
+        if phoneme == 'NG': return ['M', 'N']
+        if phoneme == 'S': return ['Z']
+        if phoneme == 'Z': return ['S']
+        if phoneme == 'P': return ['B']
+        if phoneme == 'B': return ['P']
+        if phoneme == 'T': return ['D']
+        if phoneme == 'D': return ['T']
+        if phoneme == 'K': return ['G']
+        if phoneme == 'G': return ['K']
+        if phoneme == 'F': return ['V']
+        if phoneme == 'V': return ['F']
+
+        # Return empty list if there are no similar phonemes:
+        return []
+
+
+    # Compare the rhyming parts of two words (of same length) to check whether they are identical except for similar
+    # phonemes (representing imperfect rhymes).
+    # e.g.: ['P', 'AA', 'T'] and ['B', 'AE', 'T'] would be an imperfect rhyme.
+    def __is_imperfect_rhyme__(self, repr1, repr2):
+            for i in range(len(repr1)):
+                # If the phonemes differ at some point, check whether they are similar phonemes.
+                if repr1[i] != repr2[i]:
+                    similar_phonemes = self.__get_similar_phonemes__(repr1[i])
+                    if repr2[i] in similar_phonemes:
+                        continue
+                    else:
+                        return False
+            return True
 
