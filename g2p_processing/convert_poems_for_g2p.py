@@ -41,7 +41,7 @@ else:
         in_poem = False
 
         for line in infile:
-            stripped_line = line.strip('\n')
+            stripped_line = line.strip('\n').replace('#', '')
 
             if set_start_marker:
                 out.write("<poem>\n")
