@@ -10998,7 +10998,7 @@ the;DH AH1
 tigers;T AY1 G ER Z
 were;W IY1 R
 champs;CH AE1 M P S
-'68;1
+'68;AE1
 </line>;</line>
 </poem>;</poem>
 <poem>;<poem>
@@ -47803,7 +47803,7 @@ the;DH AH1
 species;S P IY1 SH IY Z
 died;D AY1 D
 out;AW1 T
-'85;1
+'85;AH1
 </line>;</line>
 </poem>;</poem>
 <poem>;<poem>
