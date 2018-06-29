@@ -86,7 +86,8 @@ class Limerick(object):
 
 
     """
-    Evaluate how many syllables each verse has (5-11 syllables are allowed).    
+    Evaluate whether each verse has the allowed number of syllables:
+    Verse 1, 2, and 5 can have 8-11 syllables and verse 3, 4: can have 5-7 syllables.
     1.0 = 5/5 syllable counts correct
     0.8 = 4/5 syllable counts correct
     0.6 = 3/5 syllable counts correct
@@ -96,9 +97,17 @@ class Limerick(object):
     """
     def __evaluate_syllable_counts__(self):
         errors = 0
-        for count in self.syllable_counts:
-            if count < 5 or count > 11:
-                errors += 1
+        if self.syllable_counts[0] not in (8, 9, 10, 11):
+            errors += 1
+        if self.syllable_counts[1] not in (8, 9, 10, 11):
+            errors += 1
+        if self.syllable_counts[2] not in (5, 6, 7):
+            errors += 1
+        if self.syllable_counts[3] not in (5, 6, 7):
+            errors += 1
+        if self.syllable_counts[4] not in (8, 9, 10, 11):
+            errors += 1
+
         if errors == 0: return 1.0
         if errors == 1: return 0.8
         if errors == 2: return 0.6
@@ -273,18 +282,23 @@ class Limerick(object):
         rhyming_part_1 = self.__get_rhyming_part__(phones_1)
         rhyming_part_2 = self.__get_rhyming_part__(phones_2)
 
+        #print("Rhyming part 1: " + str(rhyming_part_1))
+        #print("Rhyming part 2: " + str(rhyming_part_2))
+
         # Case 3: Perfect rhyme. Return best score.
         if rhyming_part_1 == rhyming_part_2:
             return 1.0
 
         if len(rhyming_part_1) == len(rhyming_part_2):
-
             # Case 4: Imperfect rhyme. Return best score as well.
             if self.__is_imperfect_rhyme__(rhyming_part_1, rhyming_part_2):
                 return 1.0
 
         # Case 5: Compute score based on phonetic edit distance:
         ed = phonetic_edit_distance.compute_phone_ed(rhyming_part_1, rhyming_part_2)
+        #print("rhyming part 1:" + str(rhyming_part_1))
+        #print("rhyming part 2:" + str(rhyming_part_2))
+        #print("Phone_ED:" + str(ed))
         if ed == 1: return 0.9
         if ed == 2: return 0.8
         if ed == 3: return 0.7
@@ -299,11 +313,11 @@ class Limerick(object):
 
     # Computes a rhyme score for the complete poem by checking the rhymes in all 5 verses.
     def __compute_rhyme_score_for_poem__(self):
+        #print("Computing rhyme score for whole poem.")
 
         if self.has_5_verses:
             score_1_2 = self.__compute_rhyme_score__(self.phonemes[0][-1], self.phonemes[1][-1])
 
-            #print("Computing rhyme score between " + str(self.phonemes[0][-1]) + "and " + str(self.phonemes[1][-1]) + ": " + )
             #print("Computing rhyme score between {} and {}: {}".format(self.phonemes[0][-1], self.phonemes[1][-1], score_1_2))
 
             score_3_4 = self.__compute_rhyme_score__(self.phonemes[2][-1], self.phonemes[3][-1])
@@ -341,18 +355,27 @@ class Limerick(object):
 
         # similar vowels AA, AE, AH, AO, AW
         if phoneme == 'AA': return ['AE', 'AH', 'AO', 'AW']
+        if phoneme == 'AA1': return ['AE1', 'AH1', 'AO1', 'AW1']
         if phoneme == 'AE': return ['AA', 'AH', 'AO', 'AW']
+        if phoneme == 'AE1': return ['AA1', 'AH1', 'AO1', 'AW1']
         if phoneme == 'AH': return ['AE', 'AA', 'AO', 'AW']
+        if phoneme == 'AH1': return ['AE1', 'AA1', 'AO1', 'AW1']
         if phoneme == 'AO': return ['AE', 'AA', 'AH', 'AW']
+        if phoneme == 'AO1': return ['AE1', 'AA1', 'AH1', 'AW1']
         if phoneme == 'AW': return ['AE', 'AA', 'AO', 'AH']
+        if phoneme == 'AW1': return ['AE1', 'AA1', 'AO1', 'AH1']
 
         # similar vowels IH, IY
         if phoneme == 'IH': return ['IY']
+        if phoneme == 'IH1': return ['IY1']
         if phoneme == 'IY': return ['IH']
+        if phoneme == 'IY1': return ['IH1']
 
         # similar vowels UH, UW
         if phoneme == 'UH': return ['UW']
+        if phoneme == 'UH1': return ['UW1']
         if phoneme == 'UW': return ['UH']
+        if phoneme == 'UW1': return ['UH1']
 
         # similar consonants
         if phoneme == 'M': return ['N', 'NG']
@@ -362,8 +385,9 @@ class Limerick(object):
         if phoneme == 'Z': return ['S']
         if phoneme == 'P': return ['B']
         if phoneme == 'B': return ['P']
-        if phoneme == 'T': return ['D']
-        if phoneme == 'D': return ['T']
+        if phoneme == 'T': return ['D', 'DH']
+        if phoneme == 'D': return ['T', 'DH']
+        if phoneme == 'DH': return ['T', 'D']
         if phoneme == 'K': return ['G']
         if phoneme == 'G': return ['K']
         if phoneme == 'F': return ['V']
@@ -377,13 +401,18 @@ class Limerick(object):
     # phonemes (representing imperfect rhymes).
     # e.g.: ['P', 'AA', 'T'] and ['B', 'AE', 'T'] would be an imperfect rhyme.
     def __is_imperfect_rhyme__(self, repr1, repr2):
-            for i in range(len(repr1)):
-                # If the phonemes differ at some point, check whether they are similar phonemes.
-                if repr1[i] != repr2[i]:
-                    similar_phonemes = self.__get_similar_phonemes__(repr1[i])
-                    if repr2[i] in similar_phonemes:
-                        continue
-                    else:
-                        return False
-            return True
+        #print("Computing imperfect rhyme. Error occurs here.")
+        repr1 = repr1.split()
+        repr2 = repr2.split()
+        for i in range(len(repr1)):
+            # If the phonemes differ at some point, check whether they are similar phonemes.
+            if repr1[i] != repr2[i]:
+                #print(repr1[i])
+                #print(repr2[i])
+                similar_phonemes = self.__get_similar_phonemes__(repr1[i])
+                if repr2[i] in similar_phonemes:
+                    continue
+                else:
+                    return False
+        return True
 
