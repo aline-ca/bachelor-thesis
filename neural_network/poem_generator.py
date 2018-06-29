@@ -24,10 +24,10 @@ import sys
     EXAMPLE FUNCTION CALLS:
     
     Load model and generate default number of poems with default temperature:
-    python poem_generator.py saved_model.hdf5 
+    python poem_generator.py saved_model.h5 
     
     Load model and generate 10 poems with temperature 1.0:
-    python poem_generator.py saved_model.hdf5 -temperature 1.0 -poems 1 0
+    python poem_generator.py saved_model.h5 -temperature 1.0 -poems 10
     
 """
 
@@ -53,7 +53,7 @@ VOCAB_SIZE = len(ix_to_char)
 # Parse command line arguments:
 ap = argparse.ArgumentParser()
 ap.add_argument('filename')
-ap.add_argument('-temperature', type=float, default=0.5)
+ap.add_argument('-temperature', type=float, default=0.2)
 ap.add_argument('-poems', type=int, default=5)
 args = vars(ap.parse_args())
 
@@ -64,7 +64,7 @@ try:
     # Load prediction model
     model = load_model(sys.argv[1])
 except OSError:
-    print("Cannot open file '" + sys.argv[1] + "'. Please specify a saved model in .hdf5 format.")
+    print("Cannot open file '" + sys.argv[1] + "'. Please specify a saved model in hdf5 format.")
     exit()
 
 for i in range(NUM_OF_POEMS):

@@ -1,0 +1,31 @@
+————————————————————————————————————
+MODELS
+————————————————————————————————————
+————————————————————————————————————
+MODEL 1: STATEFUL LSTM
+HIDDEN LAYERS:              1
+BATCH SIZE:                50
+NEURONS PER LAYER:        500
+TRAINING SEQUENCE LENGTH: 200
+TRAINED FOR (EPOCHS):     200
+————————————————————————————————————
+MODEL 2: STATEFUL LSTM
+HIDDEN LAYERS:              2
+BATCH SIZE:                50
+NEURONS PER LAYER:        500
+TRAINING SEQUENCE LENGTH: 200
+TRAINED FOR (EPOCHS):     200
+————————————————————————————————————
+MODEL 3: STATEFUL LSTM
+HIDDEN LAYERS:              3
+BATCH SIZE:                50
+NEURONS PER LAYER:        500
+TRAINING SEQUENCE LENGTH: 200
+TRAINED FOR (EPOCHS):     200
+————————————————————————————————————
+MODEL 4: STATEFUL LSTM
+HIDDEN LAYERS:              4
+BATCH SIZE:                50
+NEURONS PER LAYER:        500
+TRAINING SEQUENCE LENGTH: 200
+TRAINED FOR (EPOCHS):     200
